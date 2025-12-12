@@ -3,39 +3,242 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PWA Calculator</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Simple PWA Calculator</title>
+
+    <meta name="theme-color" content="#3498db"/>
     <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="calculator-icon.png">
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f4f4f4;
+        }
+
+        .calculator {
+            background-color: #2c3e50;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            width: 300px;
+        }
+
+        #display {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 20px;
+            font-size: 2em;
+            text-align: right;
+            border: none;
+            border-radius: 5px;
+            background-color: #ecf0f1;
+            box-sizing: border-box;
+            overflow-x: auto;
+        }
+
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .btn {
+            background-color: #34495e;
+            color: white;
+            padding: 20px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn:hover {
+            background-color: #4e6a88;
+        }
+
+        .btn.operator {
+            background-color: #e67e22;
+        }
+
+        .btn.operator:hover {
+            background-color: #f39c12;
+        }
+
+        .btn.clear {
+            background-color: #e74c3c;
+            grid-column: span 2;
+        }
+
+        .btn.clear:hover {
+            background-color: #c0392b;
+        }
+
+        .btn.equals {
+            background-color: #2ecc71;
+        }
+
+        .btn.equals:hover {
+            background-color: #27ae60;
+        }
+    </style>
 </head>
 <body>
+
     <div class="calculator">
-        <input type="text" class="calculator-screen" value="" disabled />
-        <div class="calculator-keys">
-            
-            <button type="button" class="operator" value="+">+</button>
-            <button type="button" class="operator" value="-">-</button>
-            <button type="button" class="operator" value="*">&times;</button>
-            <button type="button" class="operator" value="/">/</button>
+        <input type="text" id="display" disabled value="0">
+        <div class="buttons">
+            <button class="btn clear" data-action="clear">C</button>
+            <button class="btn operator" data-value="%">%</button>
+            <button class="btn operator" data-value="/">/</button>
 
-            <button type="button" value="7">7</button>
-            <button type="button" value="8">8</button>
-            <button type="button" value="9">9</button>
+            <button class="btn" data-value="7">7</button>
+            <button class="btn" data-value="8">8</button>
+            <button class="btn" data-value="9">9</button>
+            <button class="btn operator" data-value="*">*</button>
 
-            <button type="button" value="4">4</button>
-            <button type="button" value="5">5</button>
-            <button type="button" value="6">6</button>
+            <button class="btn" data-value="4">4</button>
+            <button class="btn" data-value="5">5</button>
+            <button class="btn" data-value="6">6</button>
+            <button class="btn operator" data-value="-">-</button>
 
-            <button type="button" value="1">1</button>
-            <button type="button" value="2">2</button>
-            <button type="button" value="3">3</button>
+            <button class="btn" data-value="1">1</button>
+            <button class="btn" data-value="2">2</button>
+            <button class="btn" data-value="3">3</button>
+            <button class="btn operator" data-value="+">+</button>
 
-            <button type="button" value="0">0</button>
-            <button type="button" class="decimal" value=".">.</button>
-            <button type="button" class="all-clear" value="all-clear">AC</button>
-            
-            <button type="button" class="equal-sign operator" value="=">=</button>
+            <button class="btn" data-value="0">0</button>
+            <button class="btn" data-value=".">.</button>
+            <button class="btn equals" data-action="equals">=</button>
         </div>
     </div>
-    <script src="script.js"></script>
+
+    <script>
+        const display = document.getElementById('display');
+        const buttons = document.querySelectorAll('.btn');
+        let currentInput = '';
+        let operator = null;
+        let previousValue = null;
+        let waitingForSecondOperand = false;
+
+        function updateDisplay(value) {
+            display.value = value || '0';
+        }
+
+        function clear() {
+            currentInput = '';
+            operator = null;
+            previousValue = null;
+            waitingForSecondOperand = false;
+            updateDisplay('0');
+        }
+
+        function handleNumber(number) {
+            if (waitingForSecondOperand) {
+                currentInput = number;
+                waitingForSecondOperand = false;
+            } else {
+                currentInput = currentInput === '' ? number : currentInput + number;
+            }
+            updateDisplay(currentInput);
+        }
+
+        function handleDecimal() {
+            if (waitingForSecondOperand) {
+                currentInput = '0.';
+                waitingForSecondOperand = false;
+            } else if (!currentInput.includes('.')) {
+                currentInput += '.';
+            }
+            updateDisplay(currentInput);
+        }
+
+        function handleOperator(nextOperator) {
+            const inputValue = parseFloat(currentInput);
+
+            if (previousValue === null && !isNaN(inputValue)) {
+                previousValue = inputValue;
+            } else if (operator) {
+                const result = calculate(previousValue, inputValue, operator);
+                previousValue = result;
+                updateDisplay(result);
+            }
+
+            waitingForSecondOperand = true;
+            operator = nextOperator;
+        }
+
+        function calculate(prev, current, op) {
+            prev = parseFloat(prev);
+            current = parseFloat(current);
+            if (isNaN(prev) || isNaN(current)) return current; 
+
+            switch (op) {
+                case '+': return prev + current;
+                case '-': return prev - current;
+                case '*': return prev * current;
+                case '/': return prev / current;
+                case '%': return prev % current;
+                default: return current;
+            }
+        }
+
+        function handleEquals() {
+            if (previousValue === null || operator === null) {
+                return;
+            }
+            
+            const inputValue = parseFloat(currentInput);
+            const result = calculate(previousValue, inputValue, operator);
+            
+            updateDisplay(result);
+            
+            // Set up for next calculation using the result
+            currentInput = String(result);
+            previousValue = null; // Clear previous state
+            operator = null;
+            waitingForSecondOperand = true; // Ready for a new number
+        }
+
+        buttons.forEach(button => {
+            button.addEventListener('click', (event) => {
+                const { value, action } = event.target.dataset;
+
+                if (action === 'clear') {
+                    clear();
+                } else if (action === 'equals') {
+                    handleEquals();
+                } else if (event.target.classList.contains('operator')) {
+                    handleOperator(value);
+                } else if (value === '.') {
+                    handleDecimal();
+                } else if (!isNaN(parseFloat(value))) {
+                    handleNumber(value);
+                }
+            });
+        });
+
+        // Initialize the display
+        clear();
+
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('service-worker.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                    })
+                    .catch(error => {
+                        console.log('ServiceWorker registration failed: ', error);
+                    });
+            });
+        }
+    </script>
+
 </body>
 </html>

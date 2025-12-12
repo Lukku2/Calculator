@@ -1,6 +1,6 @@
 {
     "name": "Simple PWA Calculator",
-    "short_name": "CalcPWA",
+    "short_name": "My calculator",
     "description": "A basic, offline-capable calculator PWA.",
     "start_url": "./index.html",
     "display": "standalone",

@@ -1,5 +1,5 @@
 {
-    "name": "Simple PWA Calculator",
+    "name": "Lukku Calculator",
     "short_name": "My calculator",
     "description": "A basic, offline-capable calculator PWA.",
     "start_url": "./index.html",
